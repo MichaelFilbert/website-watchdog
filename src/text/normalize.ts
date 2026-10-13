@@ -9,7 +9,7 @@ export function normalizeText(raw: string): string {
   return raw
     .normalize('NFKC')
     .replace(/\r\n?/g, '\n')
-    .replace(/[​-‍﻿]/g, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
     .split('\n')
     .map((line) => line.replace(/\s+/g, ' ').trim())
     .filter((line) => line.length > 0)

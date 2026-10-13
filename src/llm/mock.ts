@@ -1,5 +1,4 @@
-import { LlmError } from './types.js';
-import type { Category, ClassifyInput, ClassifyResult, LlmProvider, Severity } from './types.js';
+import type { Category, LlmError, ClassifyInput, ClassifyResult, LlmProvider, Severity } from './types.js';
 
 /**
  * Deterministic keyword heuristic used by tests and offline runs.

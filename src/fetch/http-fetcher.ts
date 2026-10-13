@@ -32,7 +32,7 @@ export class HttpFetcher implements PageFetcher {
         headers: { 'user-agent': 'website-watchdog/0.1 (+monitoring)', accept: 'text/html,*/*;q=0.8' },
       });
     } catch (err) {
-      throw new Error(`Fetch failed: ${(err as Error).message}`);
+      throw new Error(`Fetch failed: ${(err as Error).message}`, { cause: err });
     }
     throwForStatus(res.status, res.headers.get('retry-after'));
     const body = (await res.text()).slice(0, MAX_BYTES);

@@ -18,8 +18,8 @@ const VOLATILE_PATTERNS: RegExp[] = [
   /\b[0-9a-f]{16,}\b/gi, // long hex: build ids, csrf tokens
   // counters: "1,204 people viewing", "views: 52", "3 users online"
   /\b[\d,.]+\s*(?:\+\s*)?(?:views?|visitors?|visits?|users? online|people (?:viewing|watching|online)|viewing now|watching|likes?|shares?|downloads?|comments?|members?|reviews?|ratings?)\b/gi,
-  /\b(?:views?|visitors?|visits?|likes?|shares?|downloads?|page views|online now|viewers)\s*[:\-]?\s*[\d,.]+\b/gi,
-  /(?:\bcopyright|©)\s*(?:\(c\)\s*)?\d{4}(?:\s*[-–]\s*\d{4})?/gi,
+  /\b(?:views?|visitors?|visits?|likes?|shares?|downloads?|page views|online now|viewers)\s*[:-]?\s*[\d,.]+\b/gi,
+  /(?:\bcopyright|©|\(c\))\s*(?:\(c\)\s*)?\d{4}(?:\s*[-–]\s*\d{4})?/gi,
 ];
 
 const AD_LINE = /^(?:ads?|advertisement|sponsored(?: content| links?)?|promoted|recommended for you|you may also like)\b/i;

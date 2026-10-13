@@ -91,7 +91,7 @@ export async function deliverWebhook(deps: DeliverDeps, changeId: string, attemp
   } catch (err) {
     const message = err instanceof Error && err.name === 'TimeoutError' ? `timed out after ${timeoutMs}ms` : (err as Error).message;
     await record('failure', null, message);
-    throw new Error(`Webhook request failed: ${message}`);
+    throw new Error(`Webhook request failed: ${message}`, { cause: err });
   }
 
   if (res.status >= 200 && res.status < 300) {
