@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Website Watchdog</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; margin: 0 auto; max-width: 960px; padding: 24px 16px; color: #1c1c1e; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    h2 { font-size: 16px; margin: 28px 0 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #e5e5ea; vertical-align: top; }
+    th { font-size: 12px; text-transform: uppercase; color: #6b6b70; }
+    .tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px; background: #e5e5ea; }
+    .high { background: #ffd9d6; } .medium { background: #ffecc2; } .low { background: #dff3e0; }
+    .muted { color: #6b6b70; } .err { color: #b3261e; }
+    form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    input { padding: 6px 8px; flex: 1 1 220px; }
+    button { padding: 6px 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Website Watchdog</h1>
+  <div class="muted" id="status">loading...</div>
+
+  <h2>Monitors</h2>
+  <table>
+    <thead><tr><th>Name</th><th>URL</th><th>Last check</th><th></th></tr></thead>
+    <tbody id="monitors"></tbody>
+  </table>
+  <form id="add">
+    <input name="url" placeholder="https://example.com/pricing" required>
+    <input name="webhookUrl" placeholder="Webhook URL (optional)">
+    <button>Add monitor</button>
+  </form>
+  <div class="err" id="form-error"></div>
+
+  <h2>Recent changes</h2>
+  <table>
+    <thead><tr><th>When</th><th>Monitor</th><th>Result</th><th>Summary</th><th>Webhook</th></tr></thead>
+    <tbody id="changes"></tbody>
+  </table>
+
+<script>
+  // All values from the API are inserted with textContent, never innerHTML.
+  const $ = (id) => document.getElementById(id);
+  function cell(content, className) {
+    const td = document.createElement('td');
+    if (content instanceof Node) td.appendChild(content); else td.textContent = content;
+    if (className) td.className = className;
+    return td;
+  }
+  function tag(text, extra) {
+    const s = document.createElement('span');
+    s.className = 'tag ' + (extra || '');
+    s.textContent = text;
+    return s;
+  }
+  async function api(path, options) {
+    const res = await fetch(path, options);
+    if (!res.ok && res.status !== 204) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+    return res.status === 204 ? null : res.json();
+  }
+  async function refresh() {
+    try {
+      const [monitors, changes, health] = await Promise.all([api('/monitors'), api('/changes?limit=30'), api('/health')]);
+      $('status').textContent = 'queue: ' + Object.entries(health.jobs).map(([k, v]) => k + ' ' + v).join(', ');
+      const mBody = $('monitors'); mBody.replaceChildren();
+      for (const m of monitors) {
+        const tr = document.createElement('tr');
+        const del = document.createElement('button'); del.textContent = 'Delete';
+        del.onclick = async () => { await api('/monitors/' + m.id, { method: 'DELETE' }); refresh(); };
+        const check = document.createElement('button'); check.textContent = 'Check now';
+        check.onclick = async () => { await api('/monitors/' + m.id + '/check', { method: 'POST' }); };
+        const actions = document.createElement('span'); actions.append(check, ' ', del);
+        const last = m.lastError ? 'error: ' + m.lastError : (m.lastCheckedAt ? new Date(m.lastCheckedAt).toLocaleString() : 'not yet');
+        tr.append(cell(m.name), cell(m.url), cell(last, m.lastError ? 'err' : ''), cell(actions));
+        mBody.appendChild(tr);
+      }
+      const cBody = $('changes'); cBody.replaceChildren();
+      for (const c of changes) {
+        const tr = document.createElement('tr');
+        const result = document.createElement('span');
+        if (c.status === 'pending') result.append(tag('classifying'));
+        else if (c.status === 'failed') result.append(tag('failed', 'high'));
+        else result.append(tag(c.category), ' ', tag(c.severity, c.severity), c.meaningful ? '' : ' (not meaningful)');
+        tr.append(cell(new Date(c.createdAt).toLocaleString()), cell(c.monitorName), cell(result), cell(c.summary || c.error || ''), cell(c.webhookDelivered ? 'sent' : '-'));
+        cBody.appendChild(tr);
+      }
+    } catch (e) { $('status').textContent = 'error: ' + e.message; }
+  }
+  $('add').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const f = new FormData(ev.target);
+    const body = { url: f.get('url') };
+    if (f.get('webhookUrl')) body.webhookUrl = f.get('webhookUrl');
+    try { await api('/monitors', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); ev.target.reset(); $('form-error').textContent = ''; refresh(); }
+    catch (e) { $('form-error').textContent = e.message; }
+  };
+  refresh(); setInterval(refresh, 5000);
+</script>
+</body>
+</html>
