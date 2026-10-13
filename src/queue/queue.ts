@@ -9,6 +9,8 @@ export interface Job {
   idempotencyKey: string;
   attempts: number;
   maxAttempts: number;
+  /** The worker that holds the lease. Completion and failure only apply while it still does. */
+  lockedBy: string;
 }
 
 export interface EnqueueOptions {
@@ -27,6 +29,7 @@ interface JobRow {
   idempotency_key: string;
   attempts: number;
   max_attempts: number;
+  locked_by: string;
 }
 
 const toJob = (r: JobRow): Job => ({
@@ -36,6 +39,7 @@ const toJob = (r: JobRow): Job => ({
   idempotencyKey: r.idempotency_key,
   attempts: r.attempts,
   maxAttempts: r.max_attempts,
+  lockedBy: r.locked_by,
 });
 
 /** Returns the job id, or null if a job with this idempotency key already exists. */
@@ -73,20 +77,27 @@ export async function claimJob(db: Queryable, workerId: string, leaseMs: number)
          updated_at = now()
      FROM next
      WHERE j.id = next.id
-     RETURNING j.id, j.type, j.payload, j.idempotency_key, j.attempts, j.max_attempts`,
+     RETURNING j.id, j.type, j.payload, j.idempotency_key, j.attempts, j.max_attempts, j.locked_by`,
     [workerId, leaseMs],
   );
   return res.rows[0] ? toJob(res.rows[0]) : null;
 }
 
-export async function completeJob(db: Queryable, jobId: number): Promise<void> {
-  await db.query(
-    `UPDATE jobs SET status = 'succeeded', locked_by = NULL, locked_until = NULL, last_error = NULL, updated_at = now() WHERE id = $1`,
-    [jobId],
+// Every state change after a claim is guarded by `status = 'running' AND locked_by = <this worker>`.
+// If a slow worker's lease expired and the job was reaped and claimed by someone else, the slow
+// worker's late completion or failure must not overwrite the new owner's state.
+const OWNED = `id = $1 AND status = 'running' AND locked_by = $2`;
+
+/** Returns false if this worker no longer owned the job (lease expired and it was taken over). */
+export async function completeJob(db: Queryable, job: Job): Promise<boolean> {
+  const res = await db.query(
+    `UPDATE jobs SET status = 'succeeded', locked_by = NULL, locked_until = NULL, last_error = NULL, updated_at = now() WHERE ${OWNED}`,
+    [job.id, job.lockedBy],
   );
+  return (res.rowCount ?? 0) > 0;
 }
 
-export type FailOutcome = 'retry' | 'dead';
+export type FailOutcome = 'retry' | 'dead' | 'lost';
 
 export interface FailOptions {
   backoff: BackoffOptions;
@@ -97,25 +108,28 @@ export interface FailOptions {
   random?: () => number;
 }
 
-/** Schedules a retry with backoff, or moves the job to the dead-letter state ('dead') when attempts are used up. */
+/**
+ * Schedules a retry with backoff, or moves the job to the dead-letter state ('dead') when attempts
+ * are used up. Returns 'lost' if this worker no longer owned the job.
+ */
 export async function failJob(db: Queryable, job: Job, error: unknown, opts: FailOptions): Promise<FailOutcome> {
   const message = (error instanceof Error ? error.message : String(error)).slice(0, 1000);
   if (opts.permanent || job.attempts >= job.maxAttempts) {
-    await db.query(
-      `UPDATE jobs SET status = 'dead', locked_by = NULL, locked_until = NULL, last_error = $2, updated_at = now() WHERE id = $1`,
-      [job.id, message],
+    const res = await db.query(
+      `UPDATE jobs SET status = 'dead', locked_by = NULL, locked_until = NULL, last_error = $3, updated_at = now() WHERE ${OWNED}`,
+      [job.id, job.lockedBy, message],
     );
-    return 'dead';
+    return (res.rowCount ?? 0) > 0 ? 'dead' : 'lost';
   }
   const delayMs = opts.retryAfterMs ?? backoffDelayMs(job.attempts, opts.backoff, opts.random);
-  await db.query(
+  const res = await db.query(
     `UPDATE jobs
-     SET status = 'queued', locked_by = NULL, locked_until = NULL, last_error = $2,
-         run_at = now() + make_interval(secs => $3::double precision / 1000), updated_at = now()
-     WHERE id = $1`,
-    [job.id, message, delayMs],
+     SET status = 'queued', locked_by = NULL, locked_until = NULL, last_error = $3,
+         run_at = now() + make_interval(secs => $4::double precision / 1000), updated_at = now()
+     WHERE ${OWNED}`,
+    [job.id, job.lockedBy, message, delayMs],
   );
-  return 'retry';
+  return (res.rowCount ?? 0) > 0 ? 'retry' : 'lost';
 }
 
 /**

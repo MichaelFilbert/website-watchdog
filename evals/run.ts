@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { z } from 'zod';
-import { loadConfig } from '../src/config.js';
+import { loadConfig, loadDotEnvIfPresent } from '../src/config.js';
 import { classifyAndLog } from '../src/llm/classify.js';
 import type { LlmCallRecord } from '../src/llm/classify.js';
 import { selectProvider } from '../src/llm/select.js';
@@ -22,6 +22,12 @@ const DatasetSchema = z.object({
     }),
   ),
 });
+
+// Same neutral URL for every case: case ids ("policy-01") contain the expected label,
+// so putting them in the prompt would leak the answer to the model.
+const EVAL_PAGE_URL = 'https://shop.example.com/page';
+
+loadDotEnvIfPresent();
 
 const providerArg = process.argv.find((a) => a.startsWith('--provider='))?.split('=')[1];
 const provider = providerArg ?? process.env.EVAL_PROVIDER ?? 'mock';
@@ -46,7 +52,7 @@ for (const testCase of dataset.cases) {
   const calls: LlmCallRecord[] = [];
   try {
     const { classification } = await classifyWithOneRateLimitRetry(() =>
-      classifyAndLog(llm, { url: `https://eval.example/${testCase.id}`, added: verdict.added, removed: verdict.removed, context: leadingContext(after, diff) }, (r) => void calls.push(r)),
+      classifyAndLog(llm, { url: EVAL_PAGE_URL, added: verdict.added, removed: verdict.removed, context: leadingContext(after, diff) }, (r) => void calls.push(r)),
     );
     const { meaningful, category, severity } = classification;
     results.push({

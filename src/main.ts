@@ -1,4 +1,4 @@
-import { loadConfig } from './config.js';
+import { loadConfig, loadDotEnvIfPresent } from './config.js';
 import { createPool } from './db/pool.js';
 import { migrate } from './db/migrate.js';
 import { createFetcher } from './fetch/index.js';
@@ -9,6 +9,7 @@ import { logger } from './logger.js';
 import { Worker } from './queue/worker.js';
 import { buildServer } from './api/server.js';
 
+loadDotEnvIfPresent();
 const config = loadConfig();
 const db = createPool(config.databaseUrl);
 

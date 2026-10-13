@@ -114,10 +114,26 @@ describeDb('job queue (real Postgres)', () => {
     expect((await row(claimed.id)).status).toBe('dead');
   });
 
+  it('ignores a late completion or failure from a worker whose lease was taken over', async () => {
+    await job('slow');
+    const slow = (await claimJob(db(), 'slow-worker', 30_000))!;
+    await db().query("UPDATE jobs SET locked_until = now() - interval '1 second' WHERE id = $1", [slow.id]);
+    await reapExpiredLeases(db());
+    const takeover = (await claimJob(db(), 'healthy-worker', 30_000))!;
+    expect(takeover.id).toBe(slow.id);
+
+    expect(await completeJob(db(), slow)).toBe(false);
+    expect(await failJob(db(), slow, new Error('late'), { backoff })).toBe('lost');
+    expect(await row(slow.id)).toMatchObject({ status: 'running', locked_by: 'healthy-worker' });
+
+    expect(await completeJob(db(), takeover)).toBe(true);
+    expect((await row(slow.id)).status).toBe('succeeded');
+  });
+
   it('completes a job and records success', async () => {
     await job('ok');
     const claimed = (await claimJob(db(), 'w', 30_000))!;
-    await completeJob(db(), claimed.id);
+    await completeJob(db(), claimed);
     expect((await row(claimed.id)).status).toBe('succeeded');
   });
 

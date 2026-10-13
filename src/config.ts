@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { z } from 'zod';
 
 const EnvSchema = z.object({
@@ -6,7 +7,7 @@ const EnvSchema = z.object({
   LLM_PROVIDER: z.enum(['auto', 'anthropic', 'ollama', 'mock']).default('auto'),
   ANTHROPIC_API_KEY: z.string().optional(),
   ANTHROPIC_MODEL: z.string().default('claude-haiku-5-5'),
-  OLLAMA_URL: z.string().default('http://localhost:11434'),
+  OLLAMA_URL: z.string().default('http://127.0.0.1:11434'),
   OLLAMA_MODEL: z.string().default('llama3.2'),
   WEBHOOK_SECRET: z.string().default('dev-secret-change-me'),
   DEFAULT_WEBHOOK_URL: z.string().optional(),
@@ -44,4 +45,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     webhookMaxAttempts: e.WEBHOOK_MAX_ATTEMPTS,
     backoff: { baseMs: e.BACKOFF_BASE_MS, capMs: e.BACKOFF_CAP_MS },
   };
+}
+
+/** Loads `.env` from the working directory if present. Variables already set in the shell win. */
+export function loadDotEnvIfPresent(path = '.env'): void {
+  if (existsSync(path)) process.loadEnvFile(path);
 }

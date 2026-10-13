@@ -2,9 +2,11 @@
 
 Register a URL. A background worker fetches it on a schedule, diffs the text against the last snapshot, filters out noise (timestamps, counters, ads), asks an LLM whether what is left is a change worth knowing about, and sends a signed webhook if it is.
 
-This is a portfolio project. It is a working, tested system, not a product: there are no users, and I have not run it against a live Anthropic account or a real Discord/Slack channel (see [Limitations](#limitations)). I built it to show backend and AI-automation engineering on top of my QA background, so most of the effort went into the parts that go wrong in real systems: retries, duplicates, bad LLM output and testing.
+This is a portfolio project. It is a working, tested system, not a product: there are no users. I have run it end to end with a real local model (llama3.2 via Ollama), but not against a live Anthropic account or a real Discord/Slack channel (see [Limitations](#limitations)). I built it to show backend and AI-automation engineering on top of my QA background, so most of the effort went into the parts that go wrong in real systems: retries, duplicates, bad LLM output and testing.
 
 TypeScript (strict, ESM), Node 20+, Fastify, PostgreSQL, Playwright, Vitest, zod.
+
+![Dashboard after a real run: a price rise and a sell-out classified by llama3.2 and delivered as webhooks, and a timestamp-only change filtered before the LLM](docs/dashboard.png)
 
 ## How it works
 
@@ -57,8 +59,7 @@ Needs Node 20+ and Docker.
 npm install
 npx playwright install chromium     # rendered fetching; without it the plain-fetch fallback is used
 docker compose up -d --wait         # Postgres on localhost:5432
-cp .env.example .env                # optional; defaults work. Note: nothing loads .env automatically,
-                                    # so use `export` or `node --env-file=.env` if you want to set values
+cp .env.example .env                # optional; defaults work. Loaded on start; shell variables win
 npm run dev                         # migrations run on start; dashboard at http://localhost:3000
 ```
 
@@ -77,7 +78,7 @@ curl localhost:3000/health
 | --- | --- |
 | `LLM_PROVIDER` | `auto` (default), `anthropic`, `ollama`, `mock` |
 | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | Anthropic key; model defaults to `claude-haiku-5-5` |
-| `OLLAMA_URL`, `OLLAMA_MODEL` | Defaults `http://localhost:11434`, `llama3.2` |
+| `OLLAMA_URL`, `OLLAMA_MODEL` | Defaults `http://127.0.0.1:11434`, `llama3.2` |
 | `WEBHOOK_SECRET` | HMAC key for outgoing webhooks |
 | `DEFAULT_WEBHOOK_URL` | Used for monitors without their own webhook URL |
 | `FETCH_MODE` | `auto` (Playwright, falling back to plain fetch), `playwright`, `http` |
@@ -94,7 +95,7 @@ npm run eval                # offline, mock provider
 ```
 
 - **Unit (82 tests):** normalise/diff/HTML-to-text, noise filter, backoff and jitter, HMAC sign/verify (tamper, wrong secret, replay), zod parsing of malformed LLM output, Anthropic and Ollama error mapping with stubbed clients (refusal, 429 + Retry-After, timeout, 5xx, missing tool call), `llm_calls` record contents, idempotency keys, SSRF guard, config, eval scoring.
-- **Integration (33 tests, real Postgres):** concurrent claiming, idempotent enqueue, retry with backoff, dead-letter, crash recovery via lease expiry, the worker loop, the full check -> classify -> webhook-job pipeline with a fake fetcher and mock LLM, webhook signing and dedupe against a local receiver (including 5xx, 429, 4xx, network error and a race between two workers), and the REST API. They use a separate `watchdog_test` database on the same server. If Postgres is not reachable they skip with a loud message instead of failing.
+- **Integration (34 tests, real Postgres):** concurrent claiming, idempotent enqueue, retry with backoff, dead-letter, crash recovery via lease expiry, a slow worker whose lease was taken over not being able to overwrite the new owner's result, the worker loop, the full check -> classify -> webhook-job pipeline with a fake fetcher and mock LLM, webhook signing and dedupe against a local receiver (including 5xx, 429, 4xx, network error and a race between two workers), and the REST API. They use a separate `watchdog_test` database on the same server. If Postgres is not reachable they skip with a loud message instead of failing.
 - **End-to-end (5 Playwright tests):** the real app runs as a child process against its own database. A fixture site whose content the test changes, and a local webhook receiver, stand in for the outside world. The tests assert: price change -> classified by the mock -> webhook received with a valid signature; unchanged content sends nothing; a timestamp-only change is filtered; a change in JavaScript-rendered content is detected (which a plain fetch would miss); and the dashboard shows it all.
 - **CI** (`.github/workflows/ci.yml`): typecheck, lint, unit, integration (Postgres service container), e2e, and the eval gate.
 
@@ -110,27 +111,32 @@ EVAL_PROVIDER=ollama OLLAMA_MODEL=llama3.2 npm run eval  # local model
 EVAL_PROVIDER=anthropic ANTHROPIC_API_KEY=... npm run eval
 ```
 
-Sample report (**mock provider**, `evals/reports/example-mock.md`):
+Report from a **real local model** (`ollama / llama3.2`, 3B parameters, temperature 0; `evals/reports/example-ollama-llama3.2.md`):
 
 | Metric | Value |
 | --- | --- |
 | Category accuracy | 88% |
-| Meaningful (yes/no) accuracy | 95% |
-| Severity accuracy (meaningful, category correct) | 63% |
-| Avg latency per LLM call | 0 ms |
-| Total cost (estimated) | $0.0000 |
+| Meaningful (yes/no) accuracy | 93% |
+| Severity accuracy (meaningful, category correct) | 46% |
+| Avg latency per LLM call | 1856 ms |
 | Resolved by deterministic pre-filter (no LLM call) | 9 / 40 |
+| Provider errors | 0 |
 
 | Category | Support | Precision | Recall |
 | --- | --- | --- | --- |
-| price | 6 | 86% | 100% |
+| price | 6 | 100% | 100% |
 | availability | 6 | 100% | 100% |
-| policy | 5 | 100% | 60% |
+| policy | 5 | 83% | 100% |
 | content | 5 | 56% | 100% |
 | outage | 5 | 100% | 80% |
-| noise | 13 | 100% | 85% |
+| noise | 13 | 100% | 69% |
 
-How to read this: the mock is a keyword heuristic, not a model, so this number shows that the pipeline, scoring and CI gate work offline. It says nothing about how good Claude or a local model is. The misses are the interesting part: the mock cannot recognise a policy change with no policy keyword, or a maintenance page that avoids the usual words. The eval already paid for itself once: its first run showed the LLM only saw the changed lines, with no heading, so policy changes were unclassifiable. I now pass the unchanged lines directly above the change as context. I did not run the eval against a real model for this README (no API key, and Ollama was not running on the machine), so there is no real-model table here.
+How to read this:
+
+- **The weak spot is noise.** Four of the five misses are cosmetic edits (reworded copy that means the same thing) that the model calls `content`, so it would send alerts nobody needs. That is where the next prompt or model change should be judged. Severity is also poor at 46%; a small local model does not separate "worth reading today" from "act now" reliably.
+- **The eval caught a bug in itself.** The first real-model run scored 98%, which was too good for a 3B model. The cause: the runner passed each case to the model with a URL built from the case id, such as `https://eval.example/policy-01`, so the expected label was in the prompt. With a neutral URL the honest score is 88%. The fix and the reason are commented in `evals/run.ts`.
+- **It also caught a pipeline bug earlier.** Its first run showed the LLM only saw the changed lines, with no heading, so policy changes were unclassifiable. The unchanged lines directly above a change are now passed as context.
+- The offline **mock** provider (a keyword heuristic, `evals/reports/example-mock.md`) also scores 88% category accuracy on this set. That number only proves the pipeline, scoring and CI gate run without a model; it says nothing about model quality, which is why CI uses it as a smoke gate and real-model runs are done by hand.
 
 ## Layout
 

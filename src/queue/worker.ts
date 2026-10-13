@@ -39,8 +39,8 @@ export class Worker {
     try {
       if (!handler) throw new PermanentError(`No handler registered for job type "${job.type}"`);
       await handler(job);
-      await completeJob(db, job.id);
-      jobLog.info('job succeeded');
+      if (await completeJob(db, job)) jobLog.info('job succeeded');
+      else jobLog.warn('job finished after its lease expired and was taken over; result not recorded');
     } catch (err) {
       const outcome = await failJob(db, job, err, {
         backoff,

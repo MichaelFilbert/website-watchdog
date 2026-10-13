@@ -25,7 +25,7 @@ class FakeFetcher implements PageFetcher {
 }
 
 const config = { defaultWebhookUrl: undefined, webhookSecret: 's', webhookMaxAttempts: 6 };
-const job = (payload: Record<string, unknown>, attempts = 1, maxAttempts = 5): Job => ({ id: 1, type: 't', payload, idempotencyKey: 'k', attempts, maxAttempts });
+const job = (payload: Record<string, unknown>, attempts = 1, maxAttempts = 5): Job => ({ id: 1, type: 't', payload, idempotencyKey: 'k', attempts, maxAttempts, lockedBy: 'test-worker' });
 
 describeDb('monitoring pipeline (real Postgres, fake fetcher, mock LLM)', () => {
   const { db } = useTestDb();
