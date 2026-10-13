@@ -1,0 +1,445 @@
+{
+  "description": "Hand-written before/after page text pairs with expected labels. Each case is scored on category (primary), meaningful and severity.",
+  "cases": [
+    {
+      "id": "price-01",
+      "note": "34% increase",
+      "expected": {
+        "meaningful": true,
+        "category": "price",
+        "severity": "high"
+      },
+      "before": "Pro Plan\n$29 per month\nUnlimited projects\nEmail support",
+      "after": "Pro Plan\n$39 per month\nUnlimited projects\nEmail support"
+    },
+    {
+      "id": "price-02",
+      "note": "sale price",
+      "expected": {
+        "meaningful": true,
+        "category": "price",
+        "severity": "medium"
+      },
+      "before": "Running Shoes X1\n$129.00\nFree returns",
+      "after": "Running Shoes X1\n$99.00 (was $129.00)\nFree returns"
+    },
+    {
+      "id": "price-03",
+      "note": "1.6% increase",
+      "expected": {
+        "meaningful": true,
+        "category": "price",
+        "severity": "low"
+      },
+      "before": "Coffee Beans 1kg\n$24.50\nRoasted weekly",
+      "after": "Coffee Beans 1kg\n$24.90\nRoasted weekly"
+    },
+    {
+      "id": "price-04",
+      "note": "delivery fee",
+      "expected": {
+        "meaningful": true,
+        "category": "price",
+        "severity": "medium"
+      },
+      "before": "Delivery\nStandard shipping: $5.00 flat rate",
+      "after": "Delivery\nStandard shipping: $7.50 flat rate"
+    },
+    {
+      "id": "price-05",
+      "note": "new tier added",
+      "expected": {
+        "meaningful": true,
+        "category": "price",
+        "severity": "medium"
+      },
+      "before": "Plans\nBasic $9/mo\nPro $19/mo",
+      "after": "Plans\nBasic $9/mo\nPro $19/mo\nTeam $49/mo"
+    },
+    {
+      "id": "price-06",
+      "note": "fare jump",
+      "expected": {
+        "meaningful": true,
+        "category": "price",
+        "severity": "high"
+      },
+      "before": "Sydney to Bali\nFrom AUD 389 return\nBook by Friday",
+      "after": "Sydney to Bali\nFrom AUD 512 return\nBook by Friday"
+    },
+    {
+      "id": "avail-01",
+      "note": "",
+      "expected": {
+        "meaningful": true,
+        "category": "availability",
+        "severity": "high"
+      },
+      "before": "Mechanical Keyboard K2\nIn stock - ships today\nAdd to cart",
+      "after": "Mechanical Keyboard K2\nOut of stock\nNotify me"
+    },
+    {
+      "id": "avail-02",
+      "note": "restock",
+      "expected": {
+        "meaningful": true,
+        "category": "availability",
+        "severity": "medium"
+      },
+      "before": "Limited Edition Vinyl\nSold out",
+      "after": "Limited Edition Vinyl\nBack in stock\nAdd to cart"
+    },
+    {
+      "id": "avail-03",
+      "note": "",
+      "expected": {
+        "meaningful": true,
+        "category": "availability",
+        "severity": "high"
+      },
+      "before": "Conference Tickets\n12 spots left\nRegister now",
+      "after": "Conference Tickets\nFully booked\nJoin the waitlist"
+    },
+    {
+      "id": "avail-04",
+      "note": "low stock",
+      "expected": {
+        "meaningful": true,
+        "category": "availability",
+        "severity": "medium"
+      },
+      "before": "Gaming Console\nIn stock",
+      "after": "Gaming Console\nOnly 2 left in stock"
+    },
+    {
+      "id": "avail-05",
+      "note": "slots pushed out; date has no year so must not be masked",
+      "expected": {
+        "meaningful": true,
+        "category": "availability",
+        "severity": "medium"
+      },
+      "before": "Dr Lee Dental\nNext available appointment: 14 March",
+      "after": "Dr Lee Dental\nNext available appointment: 2 May"
+    },
+    {
+      "id": "avail-06",
+      "note": "no stock vocabulary",
+      "expected": {
+        "meaningful": true,
+        "category": "availability",
+        "severity": "medium"
+      },
+      "before": "Rental Listing - 2 bed apartment\nStatus: Available",
+      "after": "Rental Listing - 2 bed apartment\nStatus: Under offer"
+    },
+    {
+      "id": "policy-01",
+      "note": "",
+      "expected": {
+        "meaningful": true,
+        "category": "policy",
+        "severity": "medium"
+      },
+      "before": "Refund Policy\n30-day money-back guarantee on all plans",
+      "after": "Refund Policy\n14-day money-back guarantee on annual plans only"
+    },
+    {
+      "id": "policy-02",
+      "note": "",
+      "expected": {
+        "meaningful": true,
+        "category": "policy",
+        "severity": "high"
+      },
+      "before": "Privacy Policy\nWe never share your data with third parties.",
+      "after": "Privacy Policy\nWe may share your usage data with advertising partners."
+    },
+    {
+      "id": "policy-03",
+      "note": "date changes too: only the arbitration clause matters",
+      "expected": {
+        "meaningful": true,
+        "category": "policy",
+        "severity": "high"
+      },
+      "before": "Terms of Service (effective 1 January 2025)\nYou may cancel at any time.",
+      "after": "Terms of Service (effective 1 January 2026)\nYou may cancel at any time.\nDisputes must be resolved through binding arbitration."
+    },
+    {
+      "id": "policy-04",
+      "note": "no obvious policy keyword",
+      "expected": {
+        "meaningful": true,
+        "category": "policy",
+        "severity": "medium"
+      },
+      "before": "Shipping\nWe ship worldwide.",
+      "after": "Shipping\nWe no longer ship to Canada or the EU due to new import rules."
+    },
+    {
+      "id": "policy-05",
+      "note": "",
+      "expected": {
+        "meaningful": true,
+        "category": "policy",
+        "severity": "high"
+      },
+      "before": "Membership\nCancel anytime from your account.",
+      "after": "Membership\nCancellations require 30 days written notice."
+    },
+    {
+      "id": "content-01",
+      "note": "new article",
+      "expected": {
+        "meaningful": true,
+        "category": "content",
+        "severity": "low"
+      },
+      "before": "Engineering Blog\nHow we migrated to Postgres 16",
+      "after": "Engineering Blog\nNew: How we cut build times by 40%\nHow we migrated to Postgres 16"
+    },
+    {
+      "id": "content-02",
+      "note": "new capability",
+      "expected": {
+        "meaningful": true,
+        "category": "content",
+        "severity": "medium"
+      },
+      "before": "About\nOur app helps teams track their time.",
+      "after": "About\nOur app helps teams track their time, send invoices and run payroll."
+    },
+    {
+      "id": "content-03",
+      "note": "new job posting",
+      "expected": {
+        "meaningful": true,
+        "category": "content",
+        "severity": "medium"
+      },
+      "before": "Careers\nProduct Designer (Sydney)",
+      "after": "Careers\nProduct Designer (Sydney)\nSenior QA Engineer (Remote)"
+    },
+    {
+      "id": "content-04",
+      "note": "",
+      "expected": {
+        "meaningful": true,
+        "category": "content",
+        "severity": "low"
+      },
+      "before": "Release notes\nv2.3 - Dark mode",
+      "after": "Release notes\nv2.4 - Offline sync and CSV export\nv2.3 - Dark mode"
+    },
+    {
+      "id": "content-05",
+      "note": "personnel change",
+      "expected": {
+        "meaningful": true,
+        "category": "content",
+        "severity": "medium"
+      },
+      "before": "Leadership\nJane Smith - Chief Technology Officer",
+      "after": "Leadership\nRaj Patel - Chief Technology Officer"
+    },
+    {
+      "id": "outage-01",
+      "note": "",
+      "expected": {
+        "meaningful": true,
+        "category": "outage",
+        "severity": "high"
+      },
+      "before": "Status\nAll systems operational",
+      "after": "Status\nMajor outage: API requests are failing. We are investigating."
+    },
+    {
+      "id": "outage-02",
+      "note": "time in text is masked, rest must survive",
+      "expected": {
+        "meaningful": true,
+        "category": "outage",
+        "severity": "medium"
+      },
+      "before": "Welcome to Acme\nSign in to continue",
+      "after": "Welcome to Acme\nScheduled maintenance: the site will be unavailable 02:00-04:00 UTC."
+    },
+    {
+      "id": "outage-03",
+      "note": "whole page became an error page",
+      "expected": {
+        "meaningful": true,
+        "category": "outage",
+        "severity": "high"
+      },
+      "before": "Pricing\nPlans start at $10 per month",
+      "after": "503 Service Unavailable\nThe server is temporarily unable to handle your request."
+    },
+    {
+      "id": "outage-04",
+      "note": "",
+      "expected": {
+        "meaningful": true,
+        "category": "outage",
+        "severity": "medium"
+      },
+      "before": "Payments: Operational\nSearch: Operational",
+      "after": "Payments: Degraded performance\nSearch: Operational"
+    },
+    {
+      "id": "outage-05",
+      "note": "maintenance page with no standard keyword",
+      "expected": {
+        "meaningful": true,
+        "category": "outage",
+        "severity": "high"
+      },
+      "before": "Shop\nBrowse our products",
+      "after": "We'll be right back\nOur site is down for upgrades."
+    },
+    {
+      "id": "noise-01",
+      "note": "timestamp",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Status page\nLast updated: 2026-03-03 14:05:11 UTC\nAll systems operational",
+      "after": "Status page\nLast updated: 2026-03-03 14:06:42 UTC\nAll systems operational"
+    },
+    {
+      "id": "noise-02",
+      "note": "relative time",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Forum thread\nPosted 5 minutes ago by sam",
+      "after": "Forum thread\nPosted 6 minutes ago by sam"
+    },
+    {
+      "id": "noise-03",
+      "note": "counter",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Live events\n1,204 people viewing this page",
+      "after": "Live events\n1,311 people viewing this page"
+    },
+    {
+      "id": "noise-04",
+      "note": "ad slot with a price-like string",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Blog\nSponsored: Try CloudHost - 50% off for 3 months\nWelcome back",
+      "after": "Blog\nSponsored: Learn Python in 30 days\nWelcome back"
+    },
+    {
+      "id": "noise-05",
+      "note": "ad body on its own line: the pre-filter cannot know, the LLM must",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Article\nAdvertisement\nTry CloudHost - 50% off for 3 months\nBody text here",
+      "after": "Article\nAdvertisement\nLearn Python in 30 days with Codely\nBody text here"
+    },
+    {
+      "id": "noise-06",
+      "note": "copyright year",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Footer\n© 2025 Acme Inc. All rights reserved.",
+      "after": "Footer\n© 2026 Acme Inc. All rights reserved."
+    },
+    {
+      "id": "noise-07",
+      "note": "build hash",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Debug\nBuild a1b2c3d4e5f6a7b8c9d0 - v2.3",
+      "after": "Debug\nBuild f0e1d2c3b4a5f6e7d8c9 - v2.3"
+    },
+    {
+      "id": "noise-08",
+      "note": "punctuation only",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Welcome to our store!\nBrowse the range",
+      "after": "Welcome to our store\nBrowse the range"
+    },
+    {
+      "id": "noise-09",
+      "note": "weather widget",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Home\nToday: 24C and sunny in Sydney",
+      "after": "Home\nToday: 26C and cloudy in Sydney"
+    },
+    {
+      "id": "noise-10",
+      "note": "price number unchanged, only the date moved",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Product\nPrice: $49.00 (checked 2026-03-03)",
+      "after": "Product\nPrice: $49.00 (checked 2026-03-04)"
+    },
+    {
+      "id": "noise-11",
+      "note": "view counter",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Video page\nViews: 5,230",
+      "after": "Video page\nViews: 5,301"
+    },
+    {
+      "id": "noise-12",
+      "note": "review count drift",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "Shop\nRated 4.8 (1,203 reviews)",
+      "after": "Shop\nRated 4.8 (1,240 reviews)"
+    },
+    {
+      "id": "noise-13",
+      "note": "stray space",
+      "expected": {
+        "meaningful": false,
+        "category": "noise",
+        "severity": "low"
+      },
+      "before": "About us\nWe build tools for small teams.",
+      "after": "About us\nWe build tools for small teams ."
+    }
+  ]
+}
