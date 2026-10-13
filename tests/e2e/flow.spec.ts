@@ -43,7 +43,7 @@ test.describe.serial('monitor -> change -> classification -> signed webhook', ()
   });
 
   const api = async <T>(path: string, init?: RequestInit): Promise<T> => {
-    const res = await fetch(`${app.url}${path}`, { ...init, headers: { 'content-type': 'application/json' } });
+    const res = await fetch(`${app.url}${path}`, { ...init, headers: init?.body ? { 'content-type': 'application/json' } : {} });
     expect(res.ok, `${init?.method ?? 'GET'} ${path} -> ${res.status}`).toBe(true);
     return (await res.json()) as T;
   };

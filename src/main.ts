@@ -26,7 +26,7 @@ const worker = new Worker({
   pollMs: config.workerPollMs,
   handlers: createHandlers({ db, config, fetcher, llm, log: logger }),
 });
-const app = buildServer({ db, config, logger: true });
+const app = buildServer({ db, config, logger });
 
 worker.start();
 const stopScheduler = startScheduler(db, logger, config.schedulerPollMs);

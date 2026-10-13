@@ -1,9 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import Fastify from 'fastify';
-import type { FastifyInstance } from 'fastify';
+import { pino } from 'pino';
 import { z } from 'zod';
 import type { Config } from '../config.js';
 import type { Db } from '../db/pool.js';
+import type { Logger } from '../logger.js';
 import { validateMonitorUrl } from '../fetch/url-guard.js';
 import { enqueue, jobStats } from '../queue/queue.js';
 
@@ -43,9 +44,9 @@ const presentMonitor = (m: MonitorRow) => ({
   createdAt: m.created_at,
 });
 
-export function buildServer(deps: { db: Db; config: Pick<Config, 'allowPrivateHosts'>; logger?: boolean }): FastifyInstance {
+export function buildServer(deps: { db: Db; config: Pick<Config, 'allowPrivateHosts'>; logger?: Logger }) {
   const { db, config } = deps;
-  const app = Fastify({ logger: deps.logger ?? false });
+  const app = Fastify({ loggerInstance: deps.logger ?? pino({ level: 'silent' }) });
 
   app.get('/', async (_req, reply) => reply.type('text/html').send(await readFile(DASHBOARD_URL, 'utf8')));
 
