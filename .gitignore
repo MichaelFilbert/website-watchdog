@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+test-results/
+playwright-report/
+evals/reports/*
+!evals/reports/.gitkeep
+!evals/reports/example-*.md
